@@ -1,0 +1,24 @@
+$session = New-PSSession
+$session = New-PSSession -configurationname Microsoft.Exchange -connectionURI http://ex2016a.tlab.local/PowerShell
+Import-PSSession $session
+$a = "<style>"
+$a = $a + "BODY{background-color:00557F;}"
+$a = $a + "TABLE{border: 1px solid black; border-collapse: collapse;}"
+$a = $a + "TH{border: 1px solid black; background: #dddddd; padding: 5px; }"
+$a = $a + "TD{border: 1px solid black; padding: 5px; }"
+$a = $a + "</style>"
+$securePass = ConvertTo-SecureString "123456789" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential ("tlab\ExTest", $securePass)
+$now = Get-Date
+$smtpServer = "mysmtpserver.com"
+$smtpFrom = "alerts@tlab.local"
+$smtpTo = "edward@tlab.local"
+$messageSubject = "CAS Server Check"
+$message = New-Object System.Net.Mail.MailMessage $smtpfrom, $smtpto
+$message.Subject = "$messageSubject - $now"
+$message.IsBodyHTML = $true
+$urls = ("https://ex2016a.tlab.local/owa","https://ex2016b.tlab.local/owa")
+$message.Body = foreach ($url in $urls) {
+Test-OwaConnectivity -URL $url -TrustAnySSLCertificate -MailboxCredential:($cred) | ConvertTo-Html -Property URL, Scenario, Result, Error -Head $a}
+$smtp = New-Object Net.Mail.SmtpClient($smtpServer)
+$smtp.Send($message)
