@@ -1,6 +1,14 @@
+######################################################
+#Script Author: Edward Van Biljon
+#Created : 26/apr/2020
+######################################################
+
 $session = New-PSSession
 $session = New-PSSession -configurationname Microsoft.Exchange -connectionURI http://ex2016a.tlab.local/PowerShell
+
 Import-PSSession $session
+
+#Compile mail body in HTML
 $a = "<style>"
 $a = $a + "BODY{background-color:00557F;}"
 $a = $a + "TABLE{border: 1px solid black; border-collapse: collapse;}"
@@ -18,7 +26,11 @@ $message = New-Object System.Net.Mail.MailMessage $smtpfrom, $smtpto
 $message.Subject = "$messageSubject - $now"
 $message.IsBodyHTML = $true
 $urls = ("https://ex2016a.tlab.local/owa","https://ex2016b.tlab.local/owa")
+
+#connect to OWA
 $message.Body = foreach ($url in $urls) {
 Test-OwaConnectivity -URL $url -TrustAnySSLCertificate -MailboxCredential:($cred) | ConvertTo-Html -Property URL, Scenario, Result, Error -Head $a}
+
+#send message
 $smtp = New-Object Net.Mail.SmtpClient($smtpServer)
 $smtp.Send($message)
